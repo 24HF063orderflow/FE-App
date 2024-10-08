@@ -1,0 +1,241 @@
+{
+  "categoryList": [
+    {
+      "id": "1",
+      "name": "BEST"
+    },
+    {
+      "id": "2",
+      "name": "SIGNATURE"
+    },
+    {
+      "id": "3",
+      "name": "MAIN"
+    },
+    {
+      "id": "4",
+      "name": "SIDE"
+    },
+    {
+      "id": "5",
+      "name": "DRINK"
+    },
+    {
+      "id": "6",
+      "name": "DRINK"
+    },
+    {
+      "id": "7",
+      "name": "DRINK"
+    },
+    {
+      "id": "8",
+      "name": "DRINK"
+    }
+  ],
+  "menuInfo": [
+    {
+      "id": "1",
+      "img": "https://via.placeholder.com/150",
+      "title": "한우생등심",
+      "price": 12000,
+      "subText": "(250g/국내산)",
+      "categories": [
+        {
+          "name": "BEST",
+          "id": 1
+        },
+        {
+          "name": "MAIN",
+          "id": 3
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "img": "https://via.placeholder.com/150",
+      "title": "한우채끝살",
+      "price": 12000,
+      "subText": "(250g/국내산)",
+      "categories": [
+        {
+          "name": "BEST",
+          "id": 1
+        },
+        {
+          "name": "MAIN",
+          "id": 3
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "img": "https://via.placeholder.com/150",
+      "title": "삼겹살",
+      "price": 10000,
+      "subText": "(300g/국내산)",
+      "categories": [
+        {
+          "name": "MAIN",
+          "id": 3
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "img": "https://via.placeholder.com/150",
+      "title": "콜라",
+      "price": 4000,
+      "categories": [
+        {
+          "name": "DRINK",
+          "id": 5
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "img": "https://via.placeholder.com/150",
+      "title": "감자튀김",
+      "price": 8000,
+      "categories": [
+        {
+          "name": "BEST",
+          "id": 1
+        },
+        {
+          "name": "SIDE",
+          "id": 4
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "img": "https://via.placeholder.com/150",
+      "title": "감자전",
+      "price": 8000,
+      "categories": [
+        {
+          "name": "BEST",
+          "id": 1
+        },
+        {
+          "name": "SIDE",
+          "id": 4
+        }
+      ]
+    }
+  ],
+  "cartList": [
+    {
+      "id": "ac50",
+      "title": "한우채끝살",
+      "price": 12000,
+      "count": 1
+    },
+    {
+      "id": "a410",
+      "title": "감자튀김",
+      "price": 8000,
+      "count": 1
+    }
+  ],
+  "staffMenuList": [
+    {
+      "id": "1",
+      "title": "가위"
+    },
+    {
+      "id": "2",
+      "title": "얼음"
+    },
+    {
+      "id": "3",
+      "title": "냅킨"
+    },
+    {
+      "id": "4",
+      "title": "물"
+    }
+  ],
+  "staffCartList": [],
+  "musicList": [
+    {
+      "title": "사계",
+      "artist": "양홍원"
+    },
+    {
+      "title": "사계2",
+      "artist": "양홍원2"
+    },
+    {
+      "title": "사계3",
+      "artist": "양홍원3"
+    },
+    {
+      "title": "사계4",
+      "artist": "양홍원4"
+    },
+    {
+      "title": "사계5",
+      "artist": "양홍원5"
+    },
+    {
+      "title": "사계6",
+      "artist": "양홍원6"
+    },
+    {
+      "title": "사계7",
+      "artist": "양홍원7"
+    },
+    {
+      "title": "사계8",
+      "artist": "양홍원8"
+    },
+    {
+      "title": "사계9",
+      "artist": "양홍원9"
+    },
+    {
+      "title": "사계10",
+      "artist": "양홍원10"
+    },
+    {
+      "id": "f252",
+      "title": "Ii",
+      "artist": "Hh"
+    }
+  ],
+  "feedbackList": [
+    {
+      "id": "7ad7",
+      "feedback": "",
+      "rating": 5
+    },
+    {
+      "id": "e546",
+      "feedback": "gdgd",
+      "rating": 5
+    },
+    {
+      "id": "790d",
+      "feedback": "gdgd",
+      "rating": 3
+    },
+    {
+      "id": "c8dd",
+      "feedback": "",
+      "rating": 3
+    },
+    {
+      "id": "95e8",
+      "feedback": "gd",
+      "rating": 5
+    },
+    {
+      "id": "e6e9",
+      "feedback": "gd",
+      "rating": 5
+    }
+  ]
+}
