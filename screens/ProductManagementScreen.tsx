@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   StatusBar,
@@ -12,89 +12,18 @@ import {
   ImageBackground,
 } from 'react-native';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import * as ImagePicker from 'expo-image-picker'; // expo-image-picker 사용
+import * as ImagePicker from 'expo-image-picker';
 import { Dimensions } from 'react-native';
+import { jwtDecode } from "jwt-decode";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const initialLayout = {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height/10,
-  };
-
-type CategoryManagementProps = {
-  categories: string[];
-  handleAddCategory: () => void;
-  handleDeleteCategory: (index: number) => void;
-  categoryName: string;
-  setCategoryName: (text: string) => void;
-  editingCategory: number | null;
-  setEditingCategory: (index: number | null) => void;
+  width: Dimensions.get('window').width,
+  height: Dimensions.get('window').height / 10,
 };
 
-const CategoryManagement: React.FC<CategoryManagementProps> = ({
-  categories,
-  handleAddCategory,
-  handleDeleteCategory,
-  categoryName,
-  setCategoryName,
-  editingCategory,
-  setEditingCategory
-}) => (
-  <View style={styles.tabContainer}>
-    <StatusBar hidden={true} />
-    <ImageBackground
-      source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/ManagerIcon/back2.png?raw=true' }}
-      style={styles.fullScreenImage}
-      resizeMode="stretch"
-    >
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>Manage Categories</Text>
-      </View>
-      <View style={styles.contentContainer}>
-        <View style={styles.listContainer}>
-          <FlatList
-            data={categories}
-            renderItem={({ item, index }) => (
-              <View style={styles.itemContainer}>
-                <View style={styles.item}>
-                  <Text style={styles.itemText}>{item}</Text>
-                  <View style={styles.itemActions}>
-                    <TouchableOpacity
-                      onPress={() => { setCategoryName(item); setEditingCategory(index); }}
-                      style={styles.editButton}
-                    >
-                      <Text style={styles.buttonText}>Edit</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteCategory(index)}
-                      style={styles.deleteButton}
-                    >
-                      <Text style={styles.buttonText}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            )}
-            keyExtractor={(item, index) => index.toString()}
-          />
-        </View>
-        <View style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Category Name"
-            value={categoryName}
-            onChangeText={setCategoryName}
-            autoCorrect={false}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <TouchableOpacity style={styles.button} onPress={handleAddCategory}>
-            <Text style={styles.buttonText}>{editingCategory !== null ? 'Update Category' : 'Add Category'}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </ImageBackground>
-  </View>
-);
+const CATEGORIES = ["BEST", "SIGNATURE", "MAIN", "SIDE", "DRINK"];
 
 type Product = {
   name: string;
@@ -102,6 +31,7 @@ type Product = {
   price: string;
   image: string | null;
   categoryIndex: number;
+  categoryName: string;
 };
 
 type ProductManagementProps = {
@@ -208,7 +138,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({
           </View>
         </View>
         <FlatList
-          data={products.filter(product => product.categoryIndex === selectedCategoryIndex)}
+          data={products}
           renderItem={({ item, index }) => (
             <View style={styles.item}>
               <Image source={{ uri: item.image || defaultImageUri }} style={styles.image} />
@@ -263,7 +193,7 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ categories, setSe
             <TouchableOpacity
               onPress={() => {
                 setSelectedCategoryIndex(index);
-                setIndex(2);
+                setIndex(1);
               }}
               style={styles.categoryButton}
             >
@@ -284,11 +214,9 @@ type Props = {
 
 const ProductManagementScreen = ({ screenChange }: Props) => {
   const handlePress = (screenName: screenType) => {
-      screenChange(screenName);
+    screenChange(screenName);
   };
-  const [categories, setCategories] = useState<string[]>([]);
-  const [categoryName, setCategoryName] = useState('');
-  const [editingCategory, setEditingCategory] = useState<number | null>(null);
+  const [categories, setCategories] = useState<string[]>(CATEGORIES);
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [productName, setProductName] = useState('');
@@ -296,52 +224,62 @@ const ProductManagementScreen = ({ screenChange }: Props) => {
   const [productPrice, setProductPrice] = useState('');
   const [productImage, setProductImage] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<number | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleAddCategory = () => {
-    if (categoryName) {
-      if (editingCategory !== null) {
-        const updatedCategories = categories.map((cat, index) =>
-          index === editingCategory ? categoryName : cat
-        );
-        setCategories(updatedCategories);
-        setEditingCategory(null);
-      } else {
-        setCategories([...categories, categoryName]);
+  useEffect(() => {
+    const fetchToken = async () => {
+      const savedToken = await AsyncStorage.getItem('jwtToken');
+      if (savedToken) {
+        setToken(savedToken);
+        const decodedToken: any = jwtDecode(savedToken);
+        setUserId(decodedToken.id);
       }
-      setCategoryName('');
-    } else {
-      Alert.alert('Error', 'Category name cannot be empty');
-    }
-  };
+    };
+    fetchToken();
+  }, []);
 
-  const handleDeleteCategory = (index: number) => {
-    Alert.alert(
-      'Delete Category',
-      'Are you sure you want to delete this category?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          onPress: () => {
-            setCategories(categories.filter((_, i) => i !== index));
-            setSelectedCategoryIndex(null);
-            setProducts(products.filter(product => product.categoryIndex !== index));
-          },
-        },
-      ]
-    );
-  };
-
-  const handleAddProduct = () => {
-    if (productName && productPrice && selectedCategoryIndex !== null) {
+  const handleAddProduct = async () => {
+    if (productName && productPrice && selectedCategoryIndex !== null && userId) {
       if (editingProduct !== null) {
         const updatedProducts = products.map((product, index) =>
-          index === editingProduct ? { name: productName, description: productDescription, price: productPrice, image: productImage, categoryIndex: selectedCategoryIndex } : product
+          index === editingProduct ? { name: productName, description: productDescription, price: productPrice, image: productImage, categoryIndex: selectedCategoryIndex, categoryName: categories[selectedCategoryIndex] } : product
         );
         setProducts(updatedProducts);
         setEditingProduct(null);
       } else {
-        setProducts([...products, { name: productName, description: productDescription, price: productPrice, image: productImage, categoryIndex: selectedCategoryIndex }]);
+        try {
+          const formData = new FormData();
+          formData.append('name', productName);
+          formData.append('description', productDescription);
+          formData.append('price', productPrice);
+          formData.append('categoryName', categories[selectedCategoryIndex]);
+          if (productImage) {
+            formData.append('image', {
+              uri: productImage,
+              type: 'image/jpeg',
+              name: 'product.jpg',
+            } as any);
+          }
+
+          const response = await axios.post(
+            `http://192.168.0.191:8080/api/food-management/${userId}/foodRegister`,
+            formData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+
+          if (response.status === 200) {
+            Alert.alert('Success', 'Product added successfully');
+            setProducts([...products, { name: productName, description: productDescription, price: productPrice, image: productImage, categoryIndex: selectedCategoryIndex, categoryName: categories[selectedCategoryIndex] }]);
+          }
+        } catch (error) {
+          Alert.alert('Error', 'Failed to add product');
+        }
       }
       setProductName('');
       setProductDescription('');
@@ -369,31 +307,48 @@ const ProductManagementScreen = ({ screenChange }: Props) => {
       Alert.alert('Permission denied', 'Sorry, we need camera roll permissions to make this work!');
       return;
     }
-  
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
-  
-    if (!result.canceled) { // 'canceled'로 수정
-      setProductImage(result.assets[0].uri); // 'assets[0].uri'를 통해 이미지 URI 가져오기
+
+    if (!result.canceled) {
+      setProductImage(result.assets[0].uri);
     }
   };
 
+  const fetchProducts = async () => {
+    if (userId && selectedCategoryIndex !== null) {
+      try {
+        const response = await axios.get(
+          `http://192.168.0.191:8080/api/food-management/${userId}/foods`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (response.status === 200) {
+          const filteredProducts = response.data.filter((product: Product) => product.categoryName === categories[selectedCategoryIndex]);
+        setProducts(filteredProducts);
+          setProducts(filteredProducts);
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to fetch products');
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCategoryIndex !== null) {
+      fetchProducts();
+    }
+  }, [selectedCategoryIndex]);
+
   const renderScene = SceneMap({
-    categories: () => (
-      <CategoryManagement
-        categories={categories}
-        handleAddCategory={handleAddCategory}
-        handleDeleteCategory={handleDeleteCategory}
-        categoryName={categoryName}
-        setCategoryName={setCategoryName}
-        editingCategory={editingCategory}
-        setEditingCategory={setEditingCategory}
-      />
-    ),
     products: () => (
       selectedCategoryIndex !== null ? (
         <ProductManagement
@@ -431,198 +386,145 @@ const ProductManagementScreen = ({ screenChange }: Props) => {
 
   const [index, setIndex] = useState<number>(0);
   const [routes] = useState([
-    { key: 'categories', title: 'Categories' },
     { key: 'categorySelection', title: 'Select Category' },
     { key: 'products', title: 'Products' },
   ]);
 
   return (
-
     <View style={styles.container}>
-    {/* 뒤로가기 버튼 추가 */}
-    <TouchableOpacity
+      <TouchableOpacity
         onPress={() => handlePress('ManagerMain')}
         style={styles.backBtn}
-    >
+      >
         <Image
-            source={require('../assets/images/backbutton.png')}  // 뒤로가기 버튼 이미지 사용
-            style={styles.backButtonImage}
+          source={require('../assets/images/backbutton.png')}
+          style={styles.backButtonImage}
         />
-    </TouchableOpacity>
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      onIndexChange={setIndex}
-      renderTabBar={props => (
-        <TabBar
-          {...props}
-          indicatorStyle={{ backgroundColor: '#ffe25e' }}
-          style={{ backgroundColor: 'black' }}
-          labelStyle={{ color: 'white' }}
-        />
-      )}
-      initialLayout={initialLayout}
-    />
+      </TouchableOpacity>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        renderTabBar={props => (
+          <TabBar
+            {...props}
+            indicatorStyle={{ backgroundColor: '#ffe25e' }}
+            style={{ backgroundColor: 'black' }}
+            labelStyle={{ color: 'white' }}
+          />
+        )}
+        initialLayout={initialLayout}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      padding: 0,
-      backgroundColor: '#fff',
-    },
-    backBtn: {
-      position: 'absolute',  // 버튼을 고정 위치로 설정
-      top: 30,  // 화면 상단에서 30px 떨어지게 설정
-      right: 20,  // 화면 오른쪽에서 20px 떨어지게 설정
-      zIndex: 1,  // 버튼이 다른 컴포넌트 위에 나타나도록 설정
+  container: {
+    flex: 1,
+    padding: 0,
+    backgroundColor: '#fff',
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 30,
+    right: 20,
+    zIndex: 1,
   },
   backButtonImage: {
-      width: 25,
-      height: 25,
-      resizeMode: 'contain',  // 이미지를 적절히 크기에 맞춰 조정
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
   },
-    fullScreenImage: {
-      width: '100%',
-      height: '100%',
-    },
-    tabContainer: {
-      flex: 1,
-      width: '100%',
-      height: '100%',
-    },
-    headerContainer: {
-      width: '100%',
-      height: '20%',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    headerText: {
-      color: 'white',
-      fontSize: 24,
-    },
-    contentContainer: {
-      width: '100%',
-      height: '80%',
-      flexDirection: 'row',
-    },
-    listContainer: {
-      width: '60%',
-      height: '100%',
-    },
-    itemContainer: {
-      flex: 1,
-    },
-    item: {
-      padding: 10,
-      backgroundColor: '#f8f8f8',
-      marginVertical: 5,
-      borderRadius: 5,
-      flexDirection: 'row',
-      alignItems: 'center',
-      height: 70,
-    },
-    itemText: {
-      fontSize: 18,
-      color: 'black',
-      flex: 1,
-    },
-    itemText2: {
-      fontSize: 48,
-      color: 'black',
-      width: '30%',
-    },
-    itemActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    editButton: {
-      backgroundColor: '#b5a883',
-      padding: 10,
-      borderRadius: 5,
-      marginHorizontal: 5,
-    },
-    deleteButton: {
-      backgroundColor: 'red',
-      padding: 10,
-      borderRadius: 5,
-      marginHorizontal: 5,
-    },
-    buttonText: {
-      color: 'white',
-      textAlign: 'center',
-    },
-    formContainer: {
-      width: '40%',
-      height: '100%',
-      backgroundColor: 'white',
-      borderRadius: 20,
-      padding: 10,
-      justifyContent: 'space-between',
-    },
-    input: {
-      height: 40,
-      borderColor: 'black',
-      borderWidth: 1,
-      borderRadius: 10,
-      marginBottom: 10,
-      paddingHorizontal: 10,
-    },
-    input2: {
-      height: 30,
-      borderColor: 'white',
-      backgroundColor: 'white',
-      borderWidth: 1,
-      borderRadius: 10,
-      marginBottom: 5,
-      paddingHorizontal: 10,
-    },
-    button: {
-      backgroundColor: '#b5a883',
-      padding: 10,
-      borderRadius: 5,
-    },
-    image: {
-      width: 50,
-      height: 50,
-      marginVertical: 10,
-      marginRight: '2%',
-    },
-    categoryItem: {
-      padding: 15,
-      fontSize: 18,
-      borderBottomWidth: 1,
-      borderBottomColor: '#ddd',
-      textAlign: 'center',
-      color: 'white',
-    },
-    listWrapper: {
-      width: '50%',
-      alignSelf: 'center',
-      marginTop: 20,
-    },
-    title: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      marginVertical: 10,
-    },
-    imagePickerButton: {
-      backgroundColor: '#b5a883',
-      padding: 10,
-      borderRadius: 5,
-      marginVertical: 10,
-      alignItems: 'center',
-    },
-    // 추가된 categoryButton 스타일
-    categoryButton: {
-      backgroundColor: '#b5a883',
-      padding: 15,
-      marginVertical: 5,
-      borderRadius: 10,
-      alignItems: 'center',
-    },
-  });
+  fullScreenImage: {
+    width: '100%',
+    height: '100%',
+  },
+  tabContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  headerContainer: {
+    width: '100%',
+    height: '20%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerText: {
+    color: 'white',
+    fontSize: 24,
+  },
+  item: {
+    padding: 10,
+    backgroundColor: '#f8f8f8',
+    marginVertical: 5,
+    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 70,
+  },
+  itemText2: {
+    fontSize: 48,
+    color: 'black',
+    width: '30%',
+  },
+  image: {
+    width: 50,
+    height: 50,
+    marginVertical: 10,
+    marginRight: '2%',
+  },
+  categoryItem: {
+    padding: 15,
+    fontSize: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    textAlign: 'center',
+    color: 'white',
+  },
+  listWrapper: {
+    width: '50%',
+    alignSelf: 'center',
+    marginTop: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+  },
+  input2: {
+    height: 30,
+    borderColor: 'white',
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 5,
+    paddingHorizontal: 10,
+  },
+  imagePickerButton: {
+    backgroundColor: '#b5a883',
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#b5a883',
+    padding: 10,
+    borderRadius: 5,
+  },
+  categoryButton: {
+    backgroundColor: '#b5a883',
+    padding: 15,
+    marginVertical: 5,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+});
 
 export default ProductManagementScreen;

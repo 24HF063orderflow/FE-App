@@ -1,41 +1,57 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Image, StatusBar, TouchableOpacity, Text, ImageBackground, TextInput } from 'react-native';
+import { StyleSheet, View, Image, StatusBar, TouchableOpacity, Text, ImageBackground, TextInput, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';  // 추가
+import axios from 'axios';  // axios 사용
 
 type screenType = 'ManagerMain' | 'Login';
 
 type Props = {
     screenChange: (screen: screenType) => void;
 };
-  
-const ManagerLogin = ({ screenChange }: Props) => {
-    const handlePress = (screenName: screenType) => {
-        screenChange(screenName);
-    };
 
-    const [isChecked, setChecked] = useState<boolean>(false);
-    const [tableNumber, setTableNumber] = useState<string>('');  // 테이블 일련번호 상태 추가
+const ManagerLogin = ({ screenChange }: Props) => {
+    const [email, setEmail] = useState<string>('');  
+    const [password, setPassword] = useState<string>(''); 
+
+    const handlePress = async () => {
+        try {
+            const response = await axios.post('http://192.168.0.191:8080/api/login', {
+                email,
+                password,
+            });
+            
+            if (response.data.status === 'Success') {
+                // JWT 토큰 저장
+                await AsyncStorage.setItem('jwtToken', response.data.token);
+                Alert.alert('로그인 성공', '로그인 성공하였습니다.');
+                screenChange('ManagerMain');  // 로그인 성공 후 화면 이동
+            } else {
+                Alert.alert('로그인 실패', '이메일 또는 비밀번호를 확인하세요.');
+            }
+        } catch (error) {
+            Alert.alert('오류 발생', '로그인 중 오류가 발생했습니다.');
+            console.error(error);
+        }
+    };
 
     return (
         <View style={styles.container}>
             <StatusBar hidden />
-
             <ImageBackground 
                 source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/LoginBack.png?raw=true' }}  
                 style={styles.fullScreenImage}
-                resizeMode="stretch"  
+                resizeMode="stretch"
             > 
-                {/* 뒤로가기 버튼 - 오른쪽 상단에 배치 */}
                 <TouchableOpacity
-                    onPress={() => handlePress('Login')}
+                    onPress={() => screenChange('Login')}
                     style={styles.backBtn}
                 >
                     <Image
-                        source={require('../assets/images/backbutton.png')}  // 뒤로가기 버튼 이미지 사용
+                        source={require('../assets/images/backbutton.png')}  
                         style={styles.backButtonImage}
                     />
                 </TouchableOpacity>
 
-                {/* 로고 */}
                 <View style={{ flexDirection: "row", justifyContent: 'center'}}>
                     <Image style={styles.Logo} source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/LoginLogo.png?raw=true' }} />
                 </View>
@@ -51,9 +67,9 @@ const ManagerLogin = ({ screenChange }: Props) => {
                             style={styles.input}
                             placeholder="이메일을 입력하세요"
                             placeholderTextColor="gray"
-                            value={tableNumber}  
-                            onChangeText={setTableNumber}  
-                            keyboardType="default" 
+                            value={email}  
+                            onChangeText={setEmail}  
+                            keyboardType="email-address" 
                         />
                     </View>
 
@@ -67,16 +83,15 @@ const ManagerLogin = ({ screenChange }: Props) => {
                             style={styles.input}
                             placeholder="비밀번호를 입력하세요"
                             placeholderTextColor="gray"
-                            value={tableNumber}  
-                            onChangeText={setTableNumber}  
-                            keyboardType="default" 
+                            value={password}  
+                            onChangeText={setPassword}  
+                            secureTextEntry 
                         />
                     </View>
                     
-                    {/* 신청하기 버튼 */}
                     <View style={{ flexDirection: "row", justifyContent: 'center', marginTop: 20 }}>
                         <TouchableOpacity
-                            onPress={() => handlePress('ManagerMain')}
+                            onPress={handlePress}
                             style={styles.typeBtn}
                         >
                             <Image

@@ -1,81 +1,72 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, Image, TextInput, TouchableOpacity, Alert } from 'react-native';
-import axios from 'axios';
-import { jwtDecode } from "jwt-decode";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type screenType = 'ManagerMain';
+type screenType = 'ManagerMain' ;
 
 // 타입 정의
 interface Feedback {
-  id: number;
-  comment: string;
-  score: number;
-  reply: string;
+  id: string;
+  feedback: string;
+  rating: number;
+  response: string;
 }
 
-type Props = {
-  screenChange: (screen: screenType) => void;
+// 예시 데이터 (Mock Data)
+const mockFeedbackList: Feedback[] = [
+  { id: '1', feedback: 'App is great!', rating: 5, response: '' },
+  { id: '2', feedback: 'Needs improvement.', rating: 3, response: '' },
+  { id: '3', feedback: 'Could be better.', rating: 4, response: '' },
+];
+
+// 예시 함수 (데이터 가져오기)
+const getFeedbackList = async (): Promise<Feedback[]> => {
+  // 실제 애플리케이션에서는 API 호출이나 데이터베이스 쿼리로 교체 필요
+  return mockFeedbackList;
 };
 
-const Suggestions = ({ screenChange }: Props) => {
-  const handlePress = (screenName: screenType) => {
-    screenChange(screenName);
+// 예시 함수 (답변 추가)
+const addFeedbackResponse = async (id: string, response: string): Promise<void> => {
+  // 실제 애플리케이션에서는 API 호출이나 데이터베이스 쿼리로 교체 필요
+  console.log(`Adding response to feedback ${id}: ${response}`);
+};
+
+type Props = {
+    screenChange: (screen: screenType) => void;
   };
+  
+  const Suggestions = ({ screenChange }: Props) => {
+    const handlePress = (screenName: screenType) => {
+      screenChange(screenName);
+    };
+
 
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [responseText, setResponseText] = useState<string>('');
-  const [selectedFeedbackId, setSelectedFeedbackId] = useState<number | null>(null);
+  const [selectedFeedbackId, setSelectedFeedbackId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchFeedbackList = async () => {
-      try {
-        const token = await AsyncStorage.getItem('jwtToken');
-        if (token) {
-          let decoded: any;
-          try {
-            decoded = jwtDecode(token);
-          } catch (error) {
-            console.error('Invalid token specified:', error);
-            return;
-          }
-          const response = await axios.get(`http://192.168.0.191:8080/api/feedback/list/${decoded.id}`, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          setFeedbackList(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching feedback list:', error);
-      }
-    };
-
-    fetchFeedbackList();
+    (async () => {
+      const list = await getFeedbackList();
+      setFeedbackList(list);
+    })();
   }, []);
 
   const handleAddResponse = async () => {
-    try {
-      const token = await AsyncStorage.getItem('jwtToken');
-      if (selectedFeedbackId && responseText.trim() && token) {
-        await axios.post(`http://192.168.0.191:8080/api/feedback/comment/${selectedFeedbackId}`, null, {
-          params: { comment: responseText },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    if (selectedFeedbackId && responseText.trim()) {
+      try {
+        await addFeedbackResponse(selectedFeedbackId, responseText);
         setFeedbackList(feedbackList.map(feedback =>
           feedback.id === selectedFeedbackId
-            ? { ...feedback, reply: responseText }
+            ? { ...feedback, response: responseText }
             : feedback
         ));
         setResponseText('');
         setSelectedFeedbackId(null);
-      } else {
-        Alert.alert('입력 오류', '답변을 입력해주세요.');
+      } catch (error) {
+        console.error('Error adding response', error);
       }
-    } catch (error) {
-      console.error('Error adding response', error);
+    } else {
+      Alert.alert('입력 오류', '답변을 입력해주세요.');
     }
   };
 
@@ -91,12 +82,12 @@ const Suggestions = ({ screenChange }: Props) => {
 
   const renderItem = ({ item }: { item: Feedback }) => (
     <View style={styles.item}>
-      <Text style={styles.itemText}>{item.comment}</Text>
-      {renderStars(item.score)}
-      {item.reply ? (
+      <Text style={styles.itemText}>{item.feedback}</Text>
+      {renderStars(item.rating)}
+      {item.response ? (
         <View style={styles.responseContainer}>
           <Text style={styles.responseTitle}>답변:</Text>
-          <Text style={styles.responseText}>{item.reply}</Text>
+          <Text style={styles.responseText}>{item.response}</Text>
         </View>
       ) : (
         <TouchableOpacity
@@ -115,19 +106,19 @@ const Suggestions = ({ screenChange }: Props) => {
     <View style={styles.container}>
       <Text style={styles.title}>건의사항 리스트</Text>
       <TouchableOpacity
-        onPress={() => handlePress('ManagerMain')}
-        style={styles.backBtn}
-      >
-        <Image
-          source={require('../assets/images/backbutton.png')}
-          style={styles.backButtonImage}
-        />
-      </TouchableOpacity>
+                    onPress={() => handlePress('ManagerMain')}
+                    style={styles.backBtn}
+                >
+                    <Image
+                        source={require('../assets/images/backbutton.png')}  // 뒤로가기 버튼 이미지 사용
+                        style={styles.backButtonImage}
+                    />
+                </TouchableOpacity>
 
       <FlatList
         data={feedbackList}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
       />
       {selectedFeedbackId && (
         <View style={styles.responseForm}>
@@ -214,16 +205,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backBtn: {
-    position: 'absolute',
-    top: 30,
-    right: 20,
-    zIndex: 1,
-  },
-  backButtonImage: {
+    position: 'absolute',  // 버튼을 고정 위치로 설정
+    top: 30,  // 화면 상단에서 30px 떨어지게 설정
+    right: 20,  // 화면 오른쪽에서 20px 떨어지게 설정
+    zIndex: 1,  // 버튼이 다른 컴포넌트 위에 나타나도록 설정
+},
+backButtonImage: {
     width: 25,
     height: 25,
-    resizeMode: 'contain',
-  },
+    resizeMode: 'contain',  // 이미지를 적절히 크기에 맞춰 조정
+},
   addButtonText: {
     color: '#FFF',
     fontSize: 16,
