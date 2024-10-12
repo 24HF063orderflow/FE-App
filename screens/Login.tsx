@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, View, Image, TouchableOpacity, Text, ImageBackground, Linking, Platform } from "react-native";
+import { scale } from "react-native-size-matters";
 
 type screenType = 'StartScreen' | 'Login' | 'MainScreen' | 'StaffCallScreen' | 'MusicRequestScreen' | 'FeedbackScreen' | 'ManagerMain' | 'CustomerSignUp' | 'ManagerSignUp' | 'ManagerLogin';
 
@@ -40,7 +41,7 @@ const Login = ({ screenChange }: Props) => {
           <View style={{ flexDirection: "row", justifyContent: 'center'}}>
               <Image style={styles.Logo} source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/LoginLogo.png?raw=true' }} />
           </View>
-          <View style={{ flexDirection: "row", justifyContent: 'center'}}>
+          <View style={{ flexDirection: "row", justifyContent: 'center', marginTop: 20}}>
             <TouchableOpacity onPress={() => handlePress('ManagerLogin')} style={styles.typeBtn}>
               <Image style={styles.buttonImage} source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/Manager.png?raw=true' }} />
             </TouchableOpacity>
@@ -97,15 +98,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonImage: {
-    width: 400,
-    height: 40,
+    width: scale(300),
+    height: scale(30),
     overflow: 'hidden',
     borderWidth: 3,
     resizeMode: 'stretch',
   },
   Logo: {
-    width: 500,
-    height: 200,
+    width: scale(500),
+    height: scale(200),
     resizeMode: 'stretch',
   },
   textButton: {
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "white",
-    fontSize: 16,
+    fontSize: scale(8),
   },
 });
 

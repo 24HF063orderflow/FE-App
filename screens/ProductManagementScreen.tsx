@@ -17,6 +17,7 @@ import { Dimensions } from 'react-native';
 import { jwtDecode } from "jwt-decode";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { scale } from "react-native-size-matters";
 
 const initialLayout = {
   width: Dimensions.get('window').width,
@@ -98,7 +99,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({
             )}
           </View>
           <View style={{ width: '40%', height: '100%', flexDirection: 'column', marginLeft: '5%' }}>
-            <Text style={{ fontSize: 20, color: 'black', textAlign: 'center', marginBottom: '5%' }}>
+            <Text style={{ fontSize: scale(20), color: 'black', textAlign: 'center', marginBottom: '5%' }}>
               상품등록: {categories[selectedCategoryIndex || 0]}
             </Text>
             <TextInput
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   input2: {
-    height: 30,
+    height: scale(30),
     borderColor: 'white',
     backgroundColor: 'white',
     borderWidth: 1,
@@ -505,6 +506,7 @@ const styles = StyleSheet.create({
   imagePickerButton: {
     backgroundColor: '#b5a883',
     padding: 10,
+    height: scale(30),
     borderRadius: 5,
     marginVertical: 10,
     alignItems: 'center',
@@ -512,11 +514,13 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     textAlign: 'center',
+    fontSize: scale(16)
   },
   button: {
     backgroundColor: '#b5a883',
     padding: 10,
     borderRadius: 5,
+    height: scale(30)
   },
   categoryButton: {
     backgroundColor: '#b5a883',

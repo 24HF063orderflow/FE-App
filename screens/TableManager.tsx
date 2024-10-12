@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, Text, Dimensions, StatusBar, ImageBackground, Image, Alert } from 'react-native';
 import Draggable from 'react-native-draggable';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from "jwt-decode";
+import axios from 'axios';
+import { scale } from "react-native-size-matters";
 
 interface Table {
     id: number;
     name: string;
-    token: string;
+    authCode: string;
+    qrUrl: string;
     x: number;
     y: number;
     checked?: boolean;
@@ -27,37 +32,183 @@ const TableManager = ({ screenChange }: Props) => {
     const [isMoveMode, setIsMoveMode] = useState<boolean>(false);
     const [isQRCodeVisible, setIsQRCodeVisible] = useState<boolean>(false);
     const [qrCodeURL, setQRCodeURL] = useState<string>('');
-    const [isQRCodeLoaded, setIsQRCodeLoaded] = useState<boolean>(false);
+    const [ownerId, setOwnerId] = useState<number | null>(null); // ownerId 상태 추가
+
     const tableAreaWidth = Dimensions.get('window').width - 40;
     const tableAreaHeight = Dimensions.get('window').height - 240;
 
-    // 고유 토큰 생성 함수
-    const generateToken = (): string => {
-        return Math.random().toString(36).substr(2, 9);
+    // JWT 토큰에서 ownerId를 가져오는 함수
+    const getOwnerIdFromJWT = async () => {
+        try {
+            const token = await AsyncStorage.getItem('jwtToken');
+            console.log('토큰', token);
+            if (token) {
+                // 토큰에서 id 추출
+                const decoded: { id: number } = jwtDecode(token); // 토큰 디코딩
+                const userId = decoded.id;
+                setOwnerId(userId);
+            }
+        } catch (error) {
+            console.error('JWT 디코딩 에러:', error);
+        }
     };
 
-    // 테이블 추가 함수
-    const addTable = () => {
-        const margin = 20;
-        const tableSize = 100;
-        const initialX = (tableCount * (tableSize + margin)) % tableAreaWidth;
-        const initialY = Math.floor((tableCount * (tableSize + margin)) / tableAreaWidth) * (tableSize + margin);
+    // 초기화 작업
+    useEffect(() => {
+        getOwnerIdFromJWT();
+        fetchTables();
+    }, [ownerId]);
+// 테이블 정보 불러오기
+const fetchTables = async () => {
+    try {
+        const token = await AsyncStorage.getItem('jwtToken');
+        if (token && ownerId) {
+            const response = await axios.get(`http://192.168.0.191:8080/api/table/manage/${ownerId}/seats`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            console.log('API 응답:', response);  // 전체 응답 확인
+            console.log('API 응답 데이터:', response.data);  // 응답의 데이터 부분만 확인
+            
+            // 응답 데이터가 배열인지 확인
+            if (Array.isArray(response.data)) {
+                const formattedTables = response.data.map(table => ({
+                    id: table.id,
+                    name: `Table ${table.tableNumber}`,
+                    authCode: table.authCode,
+                    qrUrl: table.qrUrl,
+                    x: table.x,
+                    y: table.y
+                }));
+                setTables(formattedTables);  // 테이블 정보를 state에 저장
+            } else {
+                console.error('API 응답 데이터가 배열이 아닙니다:', response.data);
+                setTables([]);  // 배열이 아닐 경우 빈 배열로 초기화
+            }
+        }
+    } catch (error) {
+        console.error('테이블 정보를 불러오지 못했습니다:', error);
+    }
+};
 
-        const newTable: Table = {
-            id: tableCount + 1,
-            name: `Table ${tableCount + 1}`,
-            token: generateToken(),
-            x: initialX,
-            y: initialY,
-        };
-        setTables([...tables, newTable]);
-        setTableCount(tableCount + 1);
+   // 테이블 추가 함수
+const addTable = async () => {
+    const margin = 20;
+    const tableSize = 100;
+
+    let initialX = 0;
+    let initialY = 0;
+
+    if (tables.length > 0) {
+        // 마지막 테이블의 좌표를 기준으로 옆에 배치
+        const lastTable = tables[tables.length - 1];
+        initialX = lastTable.x + tableSize + margin;
+        initialY = lastTable.y;
+
+        // 만약 테이블이 화면 밖으로 나가면, 다음 줄로 이동
+        if (initialX + tableSize > tableAreaWidth) {
+            initialX = 0;
+            initialY += tableSize + margin;
+        }
+    }
+
+    // 현재 테이블 목록에서 가장 큰 번호를 찾고, 그 다음 번호로 설정
+    const nextTableNumber = tables.length > 0 
+        ? Math.max(...tables.map(table => parseInt(table.name.split(' ')[1]))) + 1 
+        : 1;
+
+    if (!ownerId) return;
+
+    try {
+        const token = await AsyncStorage.getItem('jwtToken');
+        if (token) {
+            const response = await axios.post(`http://192.168.0.191:8080/api/table/manage/${ownerId}/addSeat`, null, {
+                params: {
+                    x: initialX,
+                    y: initialY
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            const newTable = {
+                id: response.data.id,
+                name: `Table ${nextTableNumber}`, // 테이블 번호 설정
+                authCode: response.data.authCode,
+                qrUrl: response.data.qrUrl,
+                x: initialX,
+                y: initialY
+            };
+            setTables([...tables, newTable]);
+            setTableCount(tableCount + 1);
+        }
+    } catch (error) {
+        console.error('테이블을 추가하지 못했습니다:', error);
+    }
+};
+
+    // 테이블 삭제 함수
+    const removeTable = async (id: number) => {
+        Alert.alert(
+            '삭제 확인',
+            '정말로 이 테이블을 삭제하시겠습니까?',
+            [
+                { text: '취소', style: 'cancel' },
+                {
+                    text: '삭제',
+                    onPress: async () => {
+                        try {
+                            const token = await AsyncStorage.getItem('jwtToken');
+                            if (token && ownerId) {
+                                await axios.delete(`http://192.168.0.191:8080/api/table/manage/${ownerId}/delete-seat/${id}`, {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`
+                                    }
+                                });
+                                setTables(tables.filter((table) => table.id !== id));
+                            }
+                        } catch (error) {
+                            console.error('테이블을 삭제하지 못했습니다:', error);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
-    const showQRCode = (token: string) => {
-        const qrCodeURL = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(token)}`;
-        setQRCodeURL(qrCodeURL);
-        setIsQRCodeLoaded(false);
+// 테이블 위치 업데이트 함수
+const updateTablePosition = async (id: number, x: number, y: number) => {
+    if (!ownerId) return;
+
+    try {
+        const token = await AsyncStorage.getItem('jwtToken');
+        if (token) {
+            await axios.put(`http://192.168.0.191:8080/api/table/manage/${ownerId}/move-seat/${id}`, null, {
+                params: {
+                    x: x,
+                    y: y
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            // 좌표 업데이트가 성공하면 클라이언트 쪽에서도 테이블 위치를 업데이트
+            setTables((prevTables) =>
+                prevTables.map((table) =>
+                    table.id === id ? { ...table, x, y } : table
+                )
+            );
+        }
+    } catch (error) {
+        console.error('테이블 위치를 업데이트하지 못했습니다:', error);
+    }
+};
+    // QR 코드 보기 함수
+    const showQRCode = (qrUrl: string) => {
+        setQRCodeURL(qrUrl);
         setIsQRCodeVisible(true);
     };
 
@@ -68,30 +219,8 @@ const TableManager = ({ screenChange }: Props) => {
     };
 
     // 토큰 보기 함수
-    const showToken = (token: string) => {
-        Alert.alert('토큰', token, [{ text: '확인', style: 'cancel' }]);
-    };
-
-    // 테이블 위치 업데이트 함수
-    const updateTablePosition = (id: number, x: number, y: number) => {
-        setTables(tables.map((table) =>
-            table.id === id ? { ...table, x, y } : table
-        ));
-    };
-
-    // 테이블 삭제 함수
-    const removeTable = (id: number) => {
-        Alert.alert(
-            '삭제 확인',
-            '정말로 이 테이블을 삭제하시겠습니까?',
-            [
-                { text: '취소', style: 'cancel' },
-                {
-                    text: '삭제',
-                    onPress: () => setTables(tables.filter((table) => table.id !== id))
-                },
-            ]
-        );
+    const showToken = (authCode: string) => {
+        Alert.alert('토큰', authCode, [{ text: '확인', style: 'cancel' }]);
     };
 
     // 이동 모드 토글 함수
@@ -106,9 +235,8 @@ const TableManager = ({ screenChange }: Props) => {
                 source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/ManagerIcon/back2.png?raw=true' }}
                 style={styles.fullScreenImage}
                 resizeMode="stretch"
-            
             >
-                                <TouchableOpacity
+                <TouchableOpacity
                     onPress={() => handlePress('ManagerMain')}
                     style={styles.backBtn}
                 >
@@ -131,22 +259,24 @@ const TableManager = ({ screenChange }: Props) => {
                         <View style={styles.tableArea}>
                             {tables.map((table) => (
                                 <Draggable
-                                    key={table.id}
-                                    x={table.x}
-                                    y={table.y}
-                                    disabled={!isMoveMode}
-                                    onDragRelease={(e, gestureState) => {
-                                        const newX = gestureState.moveX - 50;
-                                        const newY = gestureState.moveY - 50;
-                                        updateTablePosition(table.id, newX, newY);
-                                    }}
-                                >
+    key={table.id}
+    x={table.x}
+    y={table.y}
+    disabled={!isMoveMode}
+    onDragRelease={(e, gestureState) => {
+        const newX = gestureState.moveX - 50; // X 좌표
+        const newY = gestureState.moveY - 50; // Y 좌표
+        console.log('이동 후 좌표:', { newX, newY });
+
+        updateTablePosition(table.id, newX, newY); // 테이블 위치 업데이트
+    }}
+>
                                     <View style={[styles.table, table.checked && styles.checkedTable]}>
                                         <Text style={styles.tableText}>{table.name}</Text>
-                                        <TouchableOpacity style={styles.tableButton} onPress={() => showToken(table.token)}>
+                                        <TouchableOpacity style={styles.tableButton} onPress={() => showToken(table.authCode)}>
                                             <Text style={styles.buttonText}>토큰 보기</Text>
                                         </TouchableOpacity>
-                                        <TouchableOpacity style={styles.tableButton} onPress={() => showQRCode(table.token)}>
+                                        <TouchableOpacity style={styles.tableButton} onPress={() => showQRCode(table.qrUrl)}>
                                             <Text style={styles.buttonText}>QR 코드 보기</Text>
                                         </TouchableOpacity>
                                         <TouchableOpacity style={styles.tableButton} onPress={() => removeTable(table.id)}>
@@ -181,9 +311,9 @@ const TableManager = ({ screenChange }: Props) => {
                             source={{ uri: qrCodeURL }}
                             style={styles.qrCodeImage}
                             resizeMode="contain"
-                            onLoad={() => setIsQRCodeLoaded(true)}
+                            onLoad={() => console.log('QR 코드 로드 완료')}
                             onError={(error) => {
-                                console.log("QR Code image loading error", error.nativeEvent);
+                                console.error("QR Code image loading error", error.nativeEvent);
                                 Alert.alert("Error", "QR 코드를 불러오지 못했습니다.");
                             }}
                         />
@@ -211,13 +341,13 @@ const styles = StyleSheet.create({
     addButton: {
         backgroundColor: '#b5a883',
         width: '100%',
-        height: '100%',
+        height: scale(50),
         borderRadius: 10,
         alignItems: 'center',
     },
     addButtonText: {
         color: 'white',
-        fontSize: 25,
+        fontSize: scale(18),
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: '10%',
@@ -270,16 +400,17 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
         alignItems: 'center',
-    },    backBtn: {
-        position: 'absolute',  // 버튼을 고정 위치로 설정
-        top: 30,  // 화면 상단에서 30px 떨어지게 설정
-        right: 20,  // 화면 오른쪽에서 20px 떨어지게 설정
-        zIndex: 1,  // 버튼이 다른 컴포넌트 위에 나타나도록 설정
+    },
+    backBtn: {
+        position: 'absolute',
+        top: 30,
+        right: 20,
+        zIndex: 1,
     },
     backButtonImage: {
         width: 25,
         height: 25,
-        resizeMode: 'contain',  // 이미지를 적절히 크기에 맞춰 조정
+        resizeMode: 'contain',
     },
     qrCodeImage: {
         width: 200,
@@ -294,9 +425,10 @@ const styles = StyleSheet.create({
     closeButtonText: {
         color: 'white',
         fontSize: 16,
-    },    checkedTable: {
-      backgroundColor: 'red',  // 테이블이 선택되었을 때의 배경색
-  },
+    },
+    checkedTable: {
+        backgroundColor: 'red',
+    },
 });
 
 export default TableManager;

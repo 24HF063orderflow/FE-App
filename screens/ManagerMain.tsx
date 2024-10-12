@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, StatusBar, ImageBackground, Dimensions, Text, TouchableOpacity, Image } from 'react-native';
-
+import { scale } from "react-native-size-matters";
 type screenType = 
   'AdminSettingsScreen' | 
   'TableManager' | 
@@ -47,7 +47,7 @@ const ManagerMain= ({ screenChange }: Props) => {
           />
       </TouchableOpacity>
 
-        <View style={{ width: '100%', height: '15%', marginTop: '0%' }} />
+        <View style={{ width: '100%', height: '0%', marginTop: scale(40) }} />
 
         <View style={styles.contentContainer}>
           <View style={styles.rowContainer}>
@@ -256,13 +256,13 @@ backButtonImage: {
     marginTop: '0.4%',
   },
   texbox: {
-    width: 130,
-    height: '100%',
+    width: scale(70),
+    height: scale(70),
     marginLeft: '4%',
   },
   box: {
-    width:  130,
-    height: 80,
+    width:  scale(70),
+    height: scale(70),
     backgroundColor: 'white',
     borderRadius: 20,
     marginLeft: '4%',

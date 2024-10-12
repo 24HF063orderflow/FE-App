@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, View, Image, StatusBar, TouchableOpacity, Text, ImageBackground, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';  // 추가
 import axios from 'axios';  // axios 사용
+import { scale } from "react-native-size-matters";
 
 type screenType = 'ManagerMain' | 'Login';
 
@@ -56,10 +57,10 @@ const ManagerLogin = ({ screenChange }: Props) => {
                     <Image style={styles.Logo} source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/LoginLogo.png?raw=true' }} />
                 </View>
 
-                <View style={{ flexDirection: "column", marginTop: 30, marginLeft: '30%', width: '40%' }}>
+                <View style={{ flexDirection: "column", marginTop: scale(30), marginLeft: '30%', width: '40%' }}>
                     <View style={{ flexDirection: "row" }}>
-                        <Text style={{ color: 'white', fontSize: 18, fontFamily: 'Typo_DodamM' }}>이메일</Text>
-                        <Text style={{ color: 'red', fontSize: 32 }}> *</Text>
+                        <Text style={{ color: 'white', fontSize: scale(11), fontFamily: 'Typo_DodamM' }}>이메일</Text>
+                        <Text style={{ color: 'red', fontSize: scale(18) }}> *</Text>
                     </View>
 
                     <View style={{ flexDirection: "row", marginTop: 0 }}>
@@ -73,9 +74,9 @@ const ManagerLogin = ({ screenChange }: Props) => {
                         />
                     </View>
 
-                    <View style={{ flexDirection: "row", marginTop:10 }}>
-                        <Text style={{ color: 'white', fontSize: 18, fontFamily: 'Typo_DodamM' }}>비밀번호</Text>
-                        <Text style={{ color: 'red', fontSize: 32 }}> *</Text>
+                    <View style={{ flexDirection: "row", marginTop:scale(10) }}>
+                        <Text style={{ color: 'white', fontSize: scale(11), fontFamily: 'Typo_DodamM' }}>비밀번호</Text>
+                        <Text style={{ color: 'red', fontSize: scale(18) }}> *</Text>
                     </View>
 
                     <View style={{ flexDirection: "row", marginTop: 0 }}>
@@ -89,7 +90,7 @@ const ManagerLogin = ({ screenChange }: Props) => {
                         />
                     </View>
                     
-                    <View style={{ flexDirection: "row", justifyContent: 'center', marginTop: 20 }}>
+                    <View style={{ flexDirection: "row", justifyContent: 'center', marginTop: scale(10) }}>
                         <TouchableOpacity
                             onPress={handlePress}
                             style={styles.typeBtn}
@@ -116,23 +117,24 @@ const styles = StyleSheet.create({
     },
     input: {
         flex: 1,
-        borderWidth: 1,
+        borderWidth: scale(0),
         borderColor: 'gray',
         backgroundColor: 'white',
-        padding: 10,
+        width: scale(200),
+        height: scale(30),
         borderRadius: 10,
     },  
     Logo: {
-        width: 300,
-        height: 100,
+        width: scale(300),
+        height: scale(100),
         resizeMode: 'stretch',
     },
     typeBtn: {
         alignItems: 'center',
     },
     buttonImage: {
-        width: 350,
-        height: 50,
+        width: scale(190),
+        height: scale(40),
         overflow: 'hidden',
         borderWidth: 3,
         resizeMode: 'stretch',

@@ -1,22 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, ImageBackground, Alert, StyleSheet, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, Alert, StyleSheet, ImageBackground } from 'react-native';
+import { jwtDecode } from "jwt-decode";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
-// 주문 데이터의 타입 정의
+// Order 타입 정의
 interface Order {
   id: string;
-  table: string;
-  items: string;
-  status: 'Pending' | 'Completed';
-  createdAt: number;
+  tableId: number;   // tableId가 존재합니다.
+  foodName: string;
+  orderOption?: string | null;
+  orderStatus?: 'PENDING' | 'COMPLETED' | null;  // orderStatus는 optional로 처리
+  orderTime?: string | null;  // orderTime도 optional로 설정
+  ownerId: number;
+  paymentMethod: 'CASH' | 'CARD';
+  quantity: number;
+  totalAmount: number;
+  food: {
+    id: number;
+    name: string;
+    description: string;
+    imageUrl: string;
+    price: number;
+    tableManagementId: number;
+    category: { id: number; name: string };
+  };
 }
 
-// 초기 주문 목록
-const initialOrders: Order[] = [
-  { id: '1', table: 'Table 1', items: 'Pizza, Salad', status: 'Pending', createdAt: Date.now() - 600000 },
-  { id: '2', table: 'Table 2', items: 'Burger, Fries', status: 'Completed', createdAt: Date.now() - 3600000 },
-  { id: '3', table: 'Table 3', items: 'Pasta', status: 'Pending', createdAt: Date.now() - 1800000 },
-];
-
+// OptionOrder 타입 정의
+interface OptionOrder {
+  id: string;
+  itemOption: {
+    id: number;
+    optionName: string;
+    ownerId: number;
+  };
+  orderStatus?: 'PENDING' | 'COMPLETED' | null;
+  orderTime?: string | null;
+  ownerId: number;
+  quantity: number;
+  tableId: number;
+}
 type screenType = 'ManagerMain';
 
 type Props = {
@@ -25,36 +49,137 @@ type Props = {
 
 const OrderManagementScreen = ({ screenChange }: Props) => {
   const handlePress = (screenName: screenType) => {
-    screenChange(screenName);
+      screenChange(screenName);
   };
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [optionOrders, setOptionOrders] = useState<OptionOrder[]>([]);
   const [selectedTab, setSelectedTab] = useState<'Pending' | 'Completed'>('Pending');
+  const [jwtToken, setJwtToken] = useState<string | null>(null);
+  const [ownerId, setOwnerId] = useState<string | null>(null);
 
-  const handleMarkAsCompleted = (orderId: string) => {
-    setOrders(orders.map(order =>
-      order.id === orderId ? { ...order, status: 'Completed' } : order
-    ));
+  useEffect(() => {
+    const fetchTokenAndOrders = async () => {
+      const token = await AsyncStorage.getItem('jwtToken');
+      console.log('토큰', token);
+      if (token) {
+        setJwtToken(token);
+        const decoded: any = jwtDecode(token);
+        setOwnerId(decoded.id); // JWT에서 ownerId 추출
+        await fetchOrders(decoded.id, token); 
+        await fetchOptionOrders(decoded.id, token);
+      }
+    };
+    fetchTokenAndOrders();
+  }, []);
+
+  // Order 데이터를 가져오는 함수
+  const fetchOrders = async (ownerId: string, token: string) => {
+    try {
+      const response = await axios.get(`http://192.168.0.191:8080/api/orders/history/${ownerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Order Response:", response.data); // 확인용 콘솔 로그
+      setOrders(response.data);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const handleCancelOrder = (orderId: string) => {
+  // OptionOrder 데이터를 가져오는 함수
+  const fetchOptionOrders = async (ownerId: string, token: string) => {
+    try {
+      const response = await axios.get(`http://192.168.0.191:8080/api/option-orders/history/${ownerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Option Order Response:", response.data); // 확인용 콘솔 로그
+      setOptionOrders(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Order 완료 처리 함수
+  const handleMarkAsCompleted = async (orderId: string) => {
+    if (!jwtToken) return;
+    try {
+      await axios.put(`http://192.168.0.191:8080/api/orders/complete-order/${orderId}`, null, {
+        headers: { Authorization: `Bearer ${jwtToken}` },
+      });
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: 'COMPLETED' } : order
+      ));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Order 취소 처리 함수
+  const handleCancelOrder = async (orderId: string) => {
+    if (!jwtToken) return;
     Alert.alert('Cancel Order', 'Are you sure you want to cancel this order?', [
       { text: 'No', style: 'cancel' },
-      { text: 'Yes', onPress: () => {
-        setOrders(orders.filter(order => order.id !== orderId));
-      }},
+      { text: 'Yes', onPress: async () => {
+          try {
+            await axios.delete(`http://192.168.0.191:8080/api/orders/delete-food-order/${orderId}`, {
+              headers: { Authorization: `Bearer ${jwtToken}` },
+            });
+            setOrders(orders.filter(order => order.id !== orderId));
+          } catch (error) {
+            console.error(error);
+          }
+        },
+      },
     ]);
   };
 
+  // OptionOrder 완료 처리 함수
+  const handleOptionMarkAsCompleted = async (optionOrderId: string) => {
+    if (!jwtToken) return;
+    try {
+      await axios.put(`http://192.168.0.191:8080/api/option-orders/complete-option-order/${optionOrderId}`, null, {
+        headers: { Authorization: `Bearer ${jwtToken}` },
+      });
+      setOptionOrders(optionOrders.map(optionOrder =>
+        optionOrder.id === optionOrderId ? { ...optionOrder, status: 'COMPLETED' } : optionOrder
+      ));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // OptionOrder 취소 처리 함수
+  const handleCancelOptionOrder = async (optionOrderId: string) => {
+    if (!jwtToken) return;
+    Alert.alert('Cancel Option Order', 'Are you sure you want to cancel this option order?', [
+      { text: 'No', style: 'cancel' },
+      { text: 'Yes', onPress: async () => {
+          try {
+            await axios.delete(`http://192.168.0.191:8080/api/option-orders/delete-option-order/${optionOrderId}`, {
+              headers: { Authorization: `Bearer ${jwtToken}` },
+            });
+            setOptionOrders(optionOrders.filter(optionOrder => optionOrder.id !== optionOrderId));
+          } catch (error) {
+            console.error(error);
+          }
+        },
+      },
+    ]);
+  };
+
+  // Order 렌더링 함수
   const renderOrderItem = ({ item }: { item: Order }) => {
-    const elapsedTime = Math.floor((Date.now() - item.createdAt) / 60000); // 경과 시간 (분 단위)
+    const elapsedTime = item.orderTime 
+      ? Math.floor((Date.now() - new Date(item.orderTime).getTime()) / 60000) 
+      : 'Unknown';  // orderTime이 없는 경우 처리
+
     return (
       <View style={styles.orderItem}>
-        <Text style={styles.table}>Table: {item.table}</Text>
-        <Text style={styles.items}>Items: {item.items}</Text>
-        <Text style={styles.status}>Status: {item.status}</Text>
+        <Text style={styles.table}>Table ID: {item.tableId}</Text>
+        <Text style={styles.items}>Items: {item.foodName}</Text>
+        <Text style={styles.status}>Status: {item.orderStatus || 'Unknown'}</Text>
         <Text style={styles.elapsedTime}>Elapsed Time: {elapsedTime} mins</Text>
         <View style={styles.buttonsContainer}>
-          {item.status === 'Pending' && (
+          {item.orderStatus === 'PENDING' && (
             <TouchableOpacity style={styles.button} onPress={() => handleMarkAsCompleted(item.id)}>
               <Text style={styles.buttonText}>Mark as Completed</Text>
             </TouchableOpacity>
@@ -67,14 +192,41 @@ const OrderManagementScreen = ({ screenChange }: Props) => {
     );
   };
 
+  // OptionOrder 렌더링 함수
+  const renderOptionOrderItem = ({ item }: { item: OptionOrder }) => {
+    const elapsedTime = item.orderTime 
+      ? Math.floor((Date.now() - new Date(item.orderTime).getTime()) / 60000) 
+      : 'Unknown';  // orderTime이 없는 경우 처리
+
+    return (
+      <View style={styles.orderItem}>
+        <Text style={styles.items}>Option: {item.tableId}</Text>
+        <Text style={styles.items}>Option: {item.itemOption.optionName}</Text>
+        <Text style={styles.items}>Quantity: {item.quantity}</Text>
+        <Text style={styles.status}>Status: {item.orderStatus || 'Unknown'}</Text>
+        <Text style={styles.elapsedTime}>Elapsed Time: {elapsedTime} mins</Text>
+        <View style={styles.buttonsContainer}>
+          {item.orderStatus === 'PENDING' && (
+            <TouchableOpacity style={styles.button} onPress={() => handleOptionMarkAsCompleted(item.id)}>
+              <Text style={styles.buttonText}>Mark as Completed</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.button} onPress={() => handleCancelOptionOrder(item.id)}>
+            <Text style={styles.buttonText}>Cancel Option Order</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <ImageBackground 
-        source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/LoginBack.png?raw=true' }} 
-        style={styles.fullScreenImage}
-        resizeMode="cover"
-      >
-                        <TouchableOpacity
+                  <ImageBackground
+                source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/ManagerIcon/back2.png?raw=true' }}
+                style={styles.fullScreenImage}
+                resizeMode="stretch"
+            >
+                              <TouchableOpacity
                     onPress={() => handlePress('ManagerMain')}
                     style={styles.backBtn}
                 >
@@ -98,10 +250,16 @@ const OrderManagementScreen = ({ screenChange }: Props) => {
         </TouchableOpacity>
       </View>
       <FlatList
-        data={orders.filter(order => order.status === selectedTab)}
+        data={orders.filter(order => order.orderStatus === selectedTab.toUpperCase())}
         renderItem={renderOrderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.scrollContentContainer} // 스크롤 가능하도록 추가
+        keyExtractor={(item, index) => item.id || index.toString()}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
+      <FlatList
+        data={optionOrders.filter(optionOrder => optionOrder.orderStatus === selectedTab.toUpperCase())}
+        renderItem={renderOptionOrderItem}
+        keyExtractor={(item, index) => item.id || index.toString()}
+        contentContainerStyle={{ paddingBottom: 20 }}
       />
       </ImageBackground>
     </View>
@@ -110,24 +268,17 @@ const OrderManagementScreen = ({ screenChange }: Props) => {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,  // 스크롤 가능하도록 수정
+    flex: 1,
+    padding: 0,
   },
+  fullScreenImage: {
+    width: '100%',
+    height: '100%',
+},
   tabContainer: {
     flexDirection: 'row',
     marginBottom: 16,
-    marginTop: 20,
   },
-  backBtn: {
-    position: 'absolute',  // 버튼을 고정 위치로 설정
-    top: 30,  // 화면 상단에서 30px 떨어지게 설정
-    right: 20,  // 화면 오른쪽에서 20px 떨어지게 설정
-    zIndex: 1,  // 버튼이 다른 컴포넌트 위에 나타나도록 설정
-},
-backButtonImage: {
-    width: 25,
-    height: 25,
-    resizeMode: 'contain',  // 이미지를 적절히 크기에 맞춰 조정
-},
   tab: {
     flex: 1,
     padding: 12,
@@ -142,6 +293,11 @@ backButtonImage: {
   tabText: {
     color: '#000',
   },
+  backButtonImage: {
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
+},
   orderItem: {
     marginBottom: 16,
     padding: 16,
@@ -149,10 +305,6 @@ backButtonImage: {
     borderRadius: 8,
     borderColor: '#ddd',
     borderWidth: 1,
-  },
-  fullScreenImage: {
-    width: '100%',
-    height: '100%',
   },
   table: {
     fontSize: 18,
@@ -183,10 +335,12 @@ backButtonImage: {
   buttonText: {
     color: 'black',
     fontSize: 16,
-  },
-  scrollContentContainer: {
-    paddingBottom: 100,  // 스크롤 가능 영역 추가
-  },
+  },    backBtn: {
+    position: 'absolute',
+    top: 30,
+    right: 20,
+    zIndex: 1,
+},
 });
 
 export default OrderManagementScreen;
