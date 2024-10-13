@@ -21,6 +21,7 @@ import OrderManagementScreen from "./screens/OrderManagementScreen";
 import CategoryFoodManagementScreen from "./screens/CategoryFoodManagementScreen";
 import ProductManagementScreen from "./screens/ProductManagementScreen";
 import ManagerLogin from "./screens/ManagerLogin";
+import OptionManagementScreen from "./screens/OptionManagementScreen";
 
 export default function App() {
   const [isIdle, setIsIdle] = useState(true); // 초기 화면을 StartScreen으로 설정
@@ -51,7 +52,8 @@ export default function App() {
     OrderManagementScreen: OrderManagementScreen,
     CategoryFoodManagementScreen: CategoryFoodManagementScreen,
     ProductManagementScreen: ProductManagementScreen,
-    ManagerLogin: ManagerLogin
+    ManagerLogin: ManagerLogin,
+    OptionManagementScreen: OptionManagementScreen,
 
   };
 

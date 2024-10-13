@@ -15,7 +15,8 @@ type screenType =
   'OrderManagementScreen' |
   'CategoryFoodManagementScreen' |
   'ProductManagementScreen'|
-  'Login';
+  'Login' |
+  'OptionManagementScreen';
 
 type Props = {
   screenChange: (screen: screenType) => void;
@@ -70,9 +71,9 @@ const ManagerMain= ({ screenChange }: Props) => {
               </TouchableOpacity>
             </View>
             <View style={styles.box}>
-            <TouchableOpacity onPress={() => handlePress('Ad')} style={styles.typeBtn}>
+            <TouchableOpacity onPress={() => handlePress('OptionManagementScreen')} style={styles.typeBtn}>
                 <ImageBackground
-                  source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/ManagerIcon/009.png?raw=true' }}
+                  source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/ManagerIcon/007.png?raw=true' }}
                   style={styles.Icon}
                   resizeMode="stretch"
                 />
@@ -106,7 +107,7 @@ const ManagerMain= ({ screenChange }: Props) => {
               <Text style={styles.textfont}>테이블 관리</Text>
             </View>
             <View style={styles.texbox}>
-              <Text style={styles.textfont}>광고관리</Text>
+              <Text style={styles.textfont}>옵션 관리</Text>
             </View>
             <View style={styles.texbox}>
               <Text style={styles.textfont}>주문내역</Text>
