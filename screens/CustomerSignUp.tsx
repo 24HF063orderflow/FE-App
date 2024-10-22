@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Image, StatusBar, TouchableOpacity, Text, ImageBackground, TextInput, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 
 type screenType = 'MainScreen' | 'Login';
@@ -9,11 +10,10 @@ type Props = {
 };
 
 const CustomerSignUp = ({ screenChange }: Props) => {
-    const [isChecked, setChecked] = useState<boolean>(false);
-    const [tableNumber, setTableNumber] = useState<string>('');  
+    const [authCode, setAuthCode] = useState<string>(''); // 인증 코드 상태 추가
     const [hasPermission, setHasPermission] = useState<boolean | null>(null);  
     const [scanned, setScanned] = useState<boolean>(false);  
-    const [scannerVisible, setScannerVisible] = useState<boolean>(false);  // 스캐너 보이기 상태 추가
+    const [scannerVisible, setScannerVisible] = useState<boolean>(false); 
 
     useEffect(() => {
         const requestCameraPermission = async () => {
@@ -25,29 +25,63 @@ const CustomerSignUp = ({ screenChange }: Props) => {
 
     const handleBarCodeScanned = ({ type, data }: { type: any; data: string }) => {
         setScanned(true);
-        setTableNumber(data);  
-        setScannerVisible(false);  // 스캐너 비활성화
+        setAuthCode(data); // 인증 코드를 QR 코드 데이터로 설정
+        setScannerVisible(false);  
         Alert.alert('QR Code Scanned', `Scanned data: ${data}`);
     };
-
-    const handlePress = (screenName: screenType) => {
-        screenChange(screenName);
+    const handlePress = async (screenName: screenType) => {
+        if (!authCode) {
+            Alert.alert('Error', '인증 코드를 입력해주세요.');
+            return;
+        }
+    
+        // 인증 API 호출
+        try {
+            const response = await fetch('http://192.168.0.191:8080/api/seats/activate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'accept': '*/*'
+                },
+                body: JSON.stringify({ authCode })
+            });
+    
+            // 응답 상태와 메시지를 로깅
+            console.log('Response Status:', response.status);
+            const result = await response.json();
+            console.log('Response Body:', result);
+    
+            // 응답 객체에서 "Token:" 대신 "Token"으로 키 접근
+            if (response.ok && result['Token:']) {
+                // JWT 토큰 저장
+                await AsyncStorage.setItem('userToken', result['Token:']);
+                Alert.alert('Success', '테이블 연결 성공');
+                screenChange('MainScreen'); // 메인 화면으로 이동
+            } else {
+                // 서버로부터 받은 에러 메시지 출력
+                Alert.alert('Error', result.message || '인증에 실패했습니다. 다시 시도해주세요.');
+            }
+        } catch (error: any) {
+            // 타입을 any로 캐스팅하여 메시지 접근
+            console.error('Error occurred:', error);
+            Alert.alert('Error', `서버와의 연결에 문제가 발생했습니다: ${error.message || error.toString()}`);
+        }
     };
+    
+    
 
     return (
         <View style={styles.container}>
             <StatusBar hidden />
-
             <ImageBackground 
                 source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/LoginBack.png?raw=true' }}  
                 style={styles.fullScreenImage}
                 resizeMode="stretch"
             > 
                 <TouchableOpacity
-                    onPress={() => handlePress('Login')}
+                    onPress={() => screenChange('Login')}
                     style={styles.backBtn}
                 >
-                    
                     <Image
                         source={require('../assets/images/backbutton.png')}  
                         style={styles.backButtonImage}
@@ -60,17 +94,17 @@ const CustomerSignUp = ({ screenChange }: Props) => {
 
                 <View style={{ flexDirection: "column", marginTop: 30, marginLeft: '30%', width: '40%' }}>
                     <View style={{ flexDirection: "row" }}>
-                        <Text style={{ color: 'white', fontSize: 18, fontFamily: 'Typo_DodamM' }}>테이블 일련번호</Text>
+                        <Text style={{ color: 'white', fontSize: 18, fontFamily: 'Typo_DodamM' }}>테이블 인증코드</Text>
                         <Text style={{ color: 'red', fontSize: 32 }}> *</Text>
                     </View>
 
                     <View style={{ flexDirection: "row", marginTop: 0 }}>
                         <TextInput 
                             style={styles.input}
-                            placeholder="테이블 일련번호를 입력하세요"
+                            placeholder="테이블 인증코드를 입력하세요"
                             placeholderTextColor="gray"
-                            value={tableNumber}  
-                            onChangeText={setTableNumber}  
+                            value={authCode}  
+                            onChangeText={setAuthCode}  
                             keyboardType="default" 
                         />
                     </View>
@@ -80,7 +114,7 @@ const CustomerSignUp = ({ screenChange }: Props) => {
                         <TouchableOpacity
                             onPress={() => {
                                 setScanned(false);  
-                                setScannerVisible(true);  // 스캐너 보이기
+                                setScannerVisible(true);  
                             }}
                         >
                             <Image style={styles.buttonImage2} source={{ uri: 'https://github.com/24HF063orderflow/Image/blob/main/Main/qr2.png?raw=true' }} />
@@ -160,13 +194,6 @@ const styles = StyleSheet.create({
         width: 25,
         height: 25,
         resizeMode: 'contain',
-    },
-    qrScanBtn: {
-        backgroundColor: ''
-    },
-    qrScanBtnText: {
-        color: 'black',
-        fontSize: 16,
     },
 });
 
