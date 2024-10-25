@@ -21,7 +21,7 @@ const Cart = ({ cartList, toggleCartVisibility, onOrder, onModifyCart, onDeleteC
         <FlatList
           data={cartList}
           renderItem={({ item }) => <CartOrderCard orderInfo={item} onModifyCart={onModifyCart} onDeleteCart={onDeleteCart} />}
-          keyExtractor={(v, i) => v.title + i}
+          keyExtractor={(v, i) => v.name + i}
         />
         <CallButton color="#9e9e9e" onPress={onOrder}>
           주문하기

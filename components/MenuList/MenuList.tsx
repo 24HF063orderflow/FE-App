@@ -27,12 +27,12 @@ const MenuList = ({ sections, onAddCart, sectionListRef, toggleCartVisibility }:
     <SectionList
       ref={sectionListRef}
       sections={groupedSections}
-      keyExtractor={(item, index) => item.map((i: menuInfoType) => i.id ?? i.title).join("-") + index}
+      keyExtractor={(item, index) => item.map((i: menuInfoType) => i.name + index || i.name).join("-") + index}
       renderItem={({ item }) => (
         <Pressable style={styles.row}>
           {item.map((menuInfo: menuInfoType) => (
             <MenuCard
-              key={menuInfo.id}
+              key={Math.random()}
               menuInfo={menuInfo}
               itemWidth={itemWidth}
               onAddCart={onAddCart}

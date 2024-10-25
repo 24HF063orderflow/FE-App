@@ -14,8 +14,8 @@ const StaffCallMenuList = ({ menuList, onAddStaffCart }: Props) => {
     <FlatList
       key={listKey}
       data={menuList}
-      renderItem={({ item }) => <StaffCallMenuCard title={item.title} onAddStaffCart={onAddStaffCart} />}
-      keyExtractor={(v, i) => v.title + i}
+      renderItem={({ item }) => <StaffCallMenuCard id={item.id} title={item.optionName} onAddStaffCart={onAddStaffCart} />}
+      keyExtractor={(v, i) => v.optionName + i}
       numColumns={numColumns}
       columnWrapperStyle={styles.columnWrapper}
     />

@@ -12,11 +12,11 @@ type Props = {
 const CartOrderCard = ({ orderInfo, onModifyCart, onDeleteCart }: Props) => {
   return (
     <Pressable style={styles.orderInfo}>
-      <Text style={styles.orderText}>{orderInfo.title}</Text>
+      <Text style={styles.orderText}>{orderInfo.name}</Text>
       <View style={styles.orderControls}>
         <OrderOptionButton
           onPress={() => {
-            onModifyCart(orderInfo.title, 1);
+            onModifyCart(orderInfo.name, 1);
           }}
           customStyle={{ fontSize: scale(8), padding: scale(6), backgroundColor: "#e0e0e0", fontColor: "#000" }}
         >
@@ -25,7 +25,7 @@ const CartOrderCard = ({ orderInfo, onModifyCart, onDeleteCart }: Props) => {
         <Text style={styles.orderCount}>{orderInfo.count}개</Text>
         <OrderOptionButton
           onPress={() => {
-            onModifyCart(orderInfo.title, -1);
+            onModifyCart(orderInfo.name, -1);
           }}
           customStyle={{ fontSize: scale(8), padding: scale(6), backgroundColor: "#e0e0e0", fontColor: "#000" }}
         >
@@ -33,7 +33,7 @@ const CartOrderCard = ({ orderInfo, onModifyCart, onDeleteCart }: Props) => {
         </OrderOptionButton>
         <OrderOptionButton
           onPress={() => {
-            onDeleteCart(orderInfo.title);
+            onDeleteCart(orderInfo.name);
           }}
           customStyle={{ fontSize: scale(8), padding: scale(6), backgroundColor: "#ff6f61", fontColor: "#fff" }}
         >

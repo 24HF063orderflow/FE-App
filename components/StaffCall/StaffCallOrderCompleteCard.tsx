@@ -9,7 +9,7 @@ type Props = {
 const StaffCallOrderCompleteCard = ({ item }: Props) => {
   return (
     <Pressable style={styles.orderItem}>
-      <Text style={styles.itemText}>{item.title}</Text>
+      <Text style={styles.itemText}>{item.optionName}</Text>
       <Text style={[styles.itemText]}>{item.count}개</Text>
     </Pressable>
   );

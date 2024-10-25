@@ -14,7 +14,7 @@ const StaffCallOrderModalList = ({ staffCartList }: Props) => {
         <FlatList
           data={staffCartList}
           renderItem={({ item }) => <StaffCallOrderCompleteCard item={item} />}
-          keyExtractor={(v, i) => v.title + i}
+          keyExtractor={(v, i) => v.optionName + i}
         />
       </Pressable>
     </>

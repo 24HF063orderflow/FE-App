@@ -1,32 +1,28 @@
-type categoryType = {
-  id?: string;
-  name: string;
-};
+type categoryType = string;
 
 type menuInfoType = {
-  id?: string;
-  img: string;
-  title: string;
-  subText?: string;
+  name: string;
+  categoryName: string;
   price: number;
-  categories: categoryType[];
+  description: string;
+  imageUrl: string;
 };
 
 type cartType = {
-  id?: string;
-  title: string;
+  name: string;
   price: number;
   count: number;
 };
 
 type staffMenuType = {
-  id?: string;
-  title: string;
+  id: number;
+  optionName: string;
+  ownerId: number;
 };
 
 type staffCartType = {
-  id?: string;
-  title: string;
+  id: number;
+  optionName: string;
   count: number;
 };
 

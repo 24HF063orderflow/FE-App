@@ -33,14 +33,14 @@ const MainScreen = ({ screenChange }: Props) => {
     (async () => {
       setCategoryList(await getCategoryList());
       setMenuInfo(await getMenuInfo());
-      setCartList(await getCart());
+      setCartList((await getCart()) as unknown as cartType[]);
     })();
   }, []);
 
   const handleAddToCart = async (item: cartType) => {
     try {
       await addCart(item);
-      setCartList(await getCart());
+      setCartList((await getCart()) as unknown as cartType[]);
     } catch (error) {
       console.error("Error adding item to cart", error);
     }
@@ -49,7 +49,7 @@ const MainScreen = ({ screenChange }: Props) => {
   const handleModifyToCart = async (title: string, count: number) => {
     try {
       await modifyCart(title, count);
-      setCartList(await getCart());
+      setCartList((await getCart()) as unknown as cartType[]);
     } catch (error) {
       console.error("Error updating item to cart", error);
     }
@@ -58,7 +58,7 @@ const MainScreen = ({ screenChange }: Props) => {
   const handleDeleteToCart = async (title: string) => {
     try {
       await deleteCart(title);
-      setCartList(await getCart());
+      setCartList((await getCart()) as unknown as cartType[]);
     } catch (error) {
       console.error("Error deleting item to cart", error);
     }
@@ -66,7 +66,7 @@ const MainScreen = ({ screenChange }: Props) => {
 
   const clearCart = async () => {
     await deleteAllCart();
-    setCartList(await getCart());
+    setCartList((await getCart()) as unknown as cartType[]);
   };
 
   const handleCategoryPress = (index: number) => {
@@ -113,8 +113,8 @@ const MainScreen = ({ screenChange }: Props) => {
 
   // 섹션별로 데이터 그룹화
   const groupedSections = categoryList.map((category) => ({
-    title: category.name,
-    data: menuInfo.filter((item) => item.categories.some((cat) => cat.name === category.name))
+    title: category,
+    data: menuInfo.filter((item) => item.categoryName === category)
   }));
 
   return (

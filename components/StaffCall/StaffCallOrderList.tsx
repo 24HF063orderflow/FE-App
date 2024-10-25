@@ -15,7 +15,7 @@ const StaffCallOrderList = ({ data, onModifyStaffCart, onDeleteStaffCart }: Prop
       renderItem={({ item }) => (
         <StaffCallOrderCard onModifyStaffCart={onModifyStaffCart} onDeleteStaffCart={onDeleteStaffCart} orderInfo={item} />
       )}
-      keyExtractor={(v, i) => v.title + i}
+      keyExtractor={(v, i) => v.optionName + i}
     />
   );
 };

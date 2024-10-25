@@ -17,10 +17,10 @@ const CategoryList = ({ data, onPressCategory }: Props) => {
           color="#00ff0000"
           onPress={() => onPressCategory(index)} // 카테고리 버튼을 누를 때 해당 섹션으로 이동
         >
-          {item.name}
+          {item}
         </CategoryButton>
       )}
-      keyExtractor={(item) => item.id || item.name}
+      keyExtractor={(item, index) => index.toString() || item}
     />
   );
 };

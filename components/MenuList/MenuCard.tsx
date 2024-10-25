@@ -15,14 +15,14 @@ const MenuCard = ({ menuInfo, itemWidth, onAddCart, toggleCartVisibility }: Prop
     <Pressable
       style={({ pressed }) => (pressed ? [styles.card, { opacity: 0.75, width: itemWidth }] : [styles.card, { width: itemWidth }])}
       onPress={() => {
-        onAddCart({ title: menuInfo.title, price: menuInfo.price, count: 1 });
+        onAddCart({ name: menuInfo.name, price: menuInfo.price, count: 1 });
         toggleCartVisibility();
       }}
     >
-      <Image source={{ uri: menuInfo.img }} style={styles.cardImage} />
-      <Text style={styles.cardTitle}>{menuInfo.title}</Text>
+      <Image source={{ uri: menuInfo.imageUrl }} style={styles.cardImage} />
+      <Text style={styles.cardTitle}>{menuInfo.name}</Text>
       <Text style={styles.cardPrice}>{menuInfo.price}원</Text>
-      <Text style={styles.cardSubText}>{menuInfo.subText}</Text>
+      <Text style={styles.cardSubText}>{menuInfo.description}</Text>
     </Pressable>
   );
 };

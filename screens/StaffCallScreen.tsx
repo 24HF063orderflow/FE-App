@@ -51,7 +51,8 @@ const StaffCallScreen = ({ screenChange }: Props) => {
 
   const handleOnlyStaff = async () => {
     await deleteAllStaffCart();
-    await addStaffCart({ title: "직원만 호출", count: 1 });
+    const onlyStaff = staffMenuList.find((item) => item.optionName === "직원호출");
+    if (onlyStaff) await addStaffCart({ id: onlyStaff.id, optionName: onlyStaff.optionName, count: 1 });
     setStaffCartList(await getStaffCart());
     setStaffCallOrderModalVisible(true);
   };

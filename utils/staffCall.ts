@@ -1,8 +1,16 @@
 import axios from "axios";
+import { getData, removeData, storeData } from "./storeData";
 
 export const getStaffMenu = async () => {
   try {
-    const response = await axios.get<staffMenuType[]>("http://192.168.219.101:3000/staffMenuList", { timeout: 5000 });
+    const token = await getData("token");
+    const response = await axios.get<staffMenuType[]>("http://13.124.22.36:8080/api/options/list/1", {
+      timeout: 5000,
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+    console.log(response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching the staffMenu info", error);
@@ -12,8 +20,9 @@ export const getStaffMenu = async () => {
 
 export const getStaffCart = async () => {
   try {
-    const response = await axios.get<staffCartType[]>("http://192.168.219.101:3000/staffCartList", { timeout: 5000 });
-    return response.data;
+    const data = await getData("staffCart");
+    const staffCart: staffCartType[] = JSON.parse(data || "[]");
+    return staffCart;
   } catch (error) {
     console.error("Error fetching the staffCart list", error);
     return [];
@@ -23,22 +32,18 @@ export const getStaffCart = async () => {
 export const addStaffCart = async (newItem: staffCartType) => {
   try {
     // 1. 먼저 title을 이용해 항목을 찾습니다.
-    const response = await axios.get<staffCartType[]>(`http://192.168.219.101:3000/staffCartList?title=${newItem.title}`);
-
+    const data = await getData("staffCart");
+    const staffCart: staffCartType[] = JSON.parse(data || "[]");
+    let newData;
     // 2. 항목이 존재하는지 확인합니다.
-    if (response.data.length > 0) {
-      const item = response.data[0];
-      const itemId = item.id;
-
-      // 3. PATCH 요청을 통해 count 값을 업데이트합니다.
-      await axios.patch(`http://192.168.219.101:3000/staffCartList/${itemId}`, { count: item.count + 1 });
-
-      console.log(`Item with title "${item.title}" updated successfully. New count: ${item.count + 1}`);
-    } else {
-      await axios.post<cartType[]>("http://192.168.219.101:3000/staffCartList", newItem).then((response) => {
-        console.log("Menu item added:", response.data);
-      });
+    if (!data || !staffCart.some((item: staffCartType) => item.optionName === newItem.optionName)) {
+      newData = [...staffCart, newItem];
+    } else if (staffCart.some((item: staffCartType) => item.optionName === newItem.optionName)) {
+      const idx = staffCart.findIndex((item: staffCartType) => item.optionName === newItem.optionName);
+      staffCart[idx].count += 1;
+      newData = [...staffCart];
     }
+    storeData("staffCart", JSON.stringify(newData));
   } catch (error) {
     console.error("Error adding menu item:", error);
   }
@@ -46,19 +51,18 @@ export const addStaffCart = async (newItem: staffCartType) => {
 
 export const modifyStaffCart = async (title: string, count: number) => {
   try {
-    const response = await axios.get<staffCartType[]>(`http://192.168.219.101:3000/staffCartList?title=${title}`);
-
-    if (response.data.length > 0) {
-      const item = response.data[0];
-      const itemId = item.id;
-
+    const data = await getData("staffCart");
+    const staffCart: staffCartType[] = JSON.parse(data || "[]");
+    const item = staffCart.find((item) => item.optionName === title);
+    if (item) {
+      let newData;
       if (item.count > 1 || count > 0) {
-        await axios.patch(`http://192.168.219.101:3000/staffCartList/${itemId}`, { count: item.count + count });
-        console.log(`Item with title "${item.title}" updated successfully. New count: ${item.count + count}`);
+        item.count += count;
+        newData = staffCart;
       } else {
-        await axios.delete(`http://192.168.219.101:3000/staffCartList/${itemId}`);
-        console.log(`Item with title "${title}" deleted successfully.`);
+        newData = staffCart.filter((item) => item.optionName !== title);
       }
+      storeData("staffCart", JSON.stringify(newData));
     } else {
       console.log(`Item with title "${title}" not found.`);
     }
@@ -69,14 +73,13 @@ export const modifyStaffCart = async (title: string, count: number) => {
 
 export const deleteStaffCart = async (title: string) => {
   try {
-    const response = await axios.get<staffCartType[]>(`http://192.168.219.101:3000/staffCartList?title=${title}`);
+    const data = await getData("staffCart");
+    const staffCart: staffCartType[] = JSON.parse(data || "[]");
+    const item = staffCart.find((item) => item.optionName === title);
 
-    if (response.data.length > 0) {
-      const item = response.data[0];
-      const itemId = item.id;
-
-      await axios.delete(`http://192.168.219.101:3000/staffCartList/${itemId}`);
-      console.log(`Item with title "${title}" deleted successfully.`);
+    if (item) {
+      const newData = staffCart.filter((item) => item.optionName !== title);
+      storeData("staffCart", JSON.stringify(newData));
     } else {
       console.log(`Item with title "${title}" not found.`);
     }
@@ -87,11 +90,7 @@ export const deleteStaffCart = async (title: string) => {
 
 export const deleteAllStaffCart = async () => {
   try {
-    const { data: cartList } = await axios.get<staffCartType[]>(`http://192.168.219.101:3000/staffCartList`);
-
-    for (const item of cartList) {
-      await axios.delete(`http://192.168.219.101:3000/staffCartList/${item.id}`);
-    }
+    storeData("staffCart", JSON.stringify([]));
   } catch (error) {
     console.error("Error deleting cart items:", error);
   }

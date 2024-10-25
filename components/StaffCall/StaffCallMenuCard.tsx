@@ -3,16 +3,17 @@ import { Text, StyleSheet, Pressable } from "react-native";
 import { scale } from "react-native-size-matters";
 
 type Props = {
+  id: number;
   title: string;
   onAddStaffCart: (item: staffCartType) => void;
 };
 
-const StaffCallMenuCard = ({ title, onAddStaffCart }: Props) => {
+const StaffCallMenuCard = ({ id, title, onAddStaffCart }: Props) => {
   return (
     <Pressable
       style={({ pressed }) => (pressed ? [styles.card, { opacity: 0.75 }] : styles.card)}
       onPress={() => {
-        onAddStaffCart({ title: title, count: 1 });
+        onAddStaffCart({ id, optionName: title, count: 1 });
       }}
     >
       <Text style={styles.cardTitle}>{title}</Text>
@@ -31,7 +32,7 @@ const styles = StyleSheet.create({
     margin: scale(5)
   },
   cardTitle: {
-    fontSize: scale(20),
+    fontSize: scale(16),
     fontWeight: "bold",
     marginBottom: 5,
     color: "white"
