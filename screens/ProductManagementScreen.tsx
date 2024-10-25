@@ -19,7 +19,7 @@ type Product = {
   name: string;
   description: string;
   price: string;
-  image: string | null;
+  imageUrl: string | null;
   categoryIndex: number;
   categoryName: string;
 };
@@ -124,7 +124,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({
           data={products}
           renderItem={({ item, index }) => (
             <View style={styles.item}>
-              <Image source={{ uri: item.image || defaultImageUri }} style={styles.image} />
+              <Image source={{ uri: item.imageUrl || defaultImageUri }} style={styles.image} />
               <Text style={styles.itemText2}>{item.name}</Text>
               <Text style={{ fontSize: 15, width: "35%" }}>{item.description}</Text>
               <Text style={{ fontSize: 15, width: "10%" }}>Price: {item.price}원</Text>
@@ -133,7 +133,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({
                   setProductName(item.name);
                   setProductDescription(item.description);
                   setProductPrice(item.price);
-                  setProductImage(item.image);
+                  setProductImage(item.imageUrl);
                   setEditingProduct(index);
                 }}
               >
@@ -229,7 +229,7 @@ const ProductManagementScreen = ({ screenChange }: Props) => {
                 name: productName,
                 description: productDescription,
                 price: productPrice,
-                image: productImage,
+                imageUrl: productImage,
                 categoryIndex: selectedCategoryIndex,
                 categoryName: categories[selectedCategoryIndex]
               }
@@ -267,7 +267,7 @@ const ProductManagementScreen = ({ screenChange }: Props) => {
                 name: productName,
                 description: productDescription,
                 price: productPrice,
-                image: productImage,
+                imageUrl: productImage,
                 categoryIndex: selectedCategoryIndex,
                 categoryName: categories[selectedCategoryIndex]
               }
