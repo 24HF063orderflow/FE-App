@@ -45,15 +45,15 @@ const CustomerSignUp = ({ screenChange }: Props) => {
         .then((response) => {
           if (response.ok) {
             Alert.alert("성공", "로그인에 성공했습니다.");
-            screenChange(screenName);
             return response.json();
           } else {
             throw new Error("Network response was not ok");
           }
         })
-        .then((data) => {
-          storeData("tableNumber", data["TableNumber:"]);
-          storeData("token", data["Token:"]);
+        .then(async (data) => {
+          await storeData("token", data["Token:"]);
+          await storeData("tableNumber", data["TableNumber:"]);
+          screenChange(screenName);
         })
         .catch((error) => {
           Alert.alert("실패", "로그인에 실패했습니다.");

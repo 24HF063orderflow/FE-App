@@ -7,6 +7,8 @@ import CallButton from "../components/CallButton";
 import { useEffect, useState } from "react";
 import { addStaffCart, deleteAllStaffCart, deleteStaffCart, getStaffCart, getStaffMenu, modifyStaffCart } from "../utils/staffCall";
 import StaffCallOrderCompleteModal from "../components/StaffCall/StaffCallOrderCompleteModal";
+import { postStaffOrder } from "../utils/order";
+import { getData } from "../utils/storeData";
 
 type Props = {
   screenChange: (screen: screenType) => void;
@@ -54,7 +56,14 @@ const StaffCallScreen = ({ screenChange }: Props) => {
     const onlyStaff = staffMenuList.find((item) => item.optionName === "직원호출");
     if (onlyStaff) await addStaffCart({ id: onlyStaff.id, optionName: onlyStaff.optionName, count: 1 });
     setStaffCartList(await getStaffCart());
+    handleOrder();
     setStaffCallOrderModalVisible(true);
+  };
+
+  const handleOrder = async () => {
+    const data = await getData("staffCart");
+    const staff: staffCartType[] = JSON.parse(data || "[]");
+    postStaffOrder(staff);
   };
 
   useEffect(() => {
@@ -83,8 +92,10 @@ const StaffCallScreen = ({ screenChange }: Props) => {
           <CallButton
             color="#9e9e9e"
             onPress={() => {
-              if (staffCartList.length > 0) setStaffCallOrderModalVisible(true);
-              else alert("요청상품을 추가해주세요!");
+              if (staffCartList.length > 0) {
+                setStaffCallOrderModalVisible(true);
+                handleOrder();
+              } else alert("요청상품을 추가해주세요!");
             }}
           >
             요청하기

@@ -11,6 +11,8 @@ import ReceiptModal from "../components/Order/ReceiptModal";
 import { getMenuInfo } from "../utils/menuInfo";
 import { addCart, deleteAllCart, deleteCart, getCart, modifyCart } from "../utils/cart";
 import { getCategoryList } from "../utils/categoryList";
+import { postCartOrder } from "../utils/order";
+import { getData, removeData } from "../utils/storeData";
 
 type Props = {
   screenChange: (screen: screenType) => void;
@@ -96,9 +98,14 @@ const MainScreen = ({ screenChange }: Props) => {
     else alert("상품을 추가해주세요!");
   };
 
-  const handlePaymentSelect = (method: string) => {
-    console.log(`Selected payment method: ${method}`);
-    togglePaymentComplete();
+  const handlePaymentSelect = async (method: string) => {
+    const data = await getData("cart");
+    const cart: cartType[] = JSON.parse(data || "[]");
+    postCartOrder(method, cart).then(() => {
+      clearCart();
+    });
+    togglePaymentModal();
+    // togglePaymentComplete();
   };
 
   const toggleCart = () => {

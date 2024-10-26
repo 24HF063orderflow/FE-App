@@ -14,7 +14,7 @@ const OrderModalList = ({ orderList }: Props) => {
   return (
     <>
       <Pressable style={{ flex: 1 }}>
-        <FlatList data={orderList} renderItem={({ item }) => <OrderCard item={item} />} keyExtractor={(v, i) => v.title + i} />
+        <FlatList data={orderList} renderItem={({ item }) => <OrderCard item={item} />} keyExtractor={(v, i) => v.name + i} />
       </Pressable>
       <View style={styles.totalContainer}>
         <Text style={styles.totalText}>합</Text>

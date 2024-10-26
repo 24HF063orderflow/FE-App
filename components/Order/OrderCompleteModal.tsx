@@ -60,6 +60,7 @@ const OrderCompleteModal = ({
                   onClose();
                   clearCart();
                 }}
+                disabled
               >
                 후불 결제
               </OrderButton>
@@ -69,7 +70,7 @@ const OrderCompleteModal = ({
               onPress={() => {
                 onClose();
                 togglePaymentComplete();
-                toggleReceiptVisible();
+                // toggleReceiptVisible();
               }}
             >
               영수증

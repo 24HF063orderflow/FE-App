@@ -3,14 +3,14 @@ import { Image, Pressable, StyleSheet, Text } from "react-native";
 import { scale } from "react-native-size-matters";
 
 type Props = {
-  onSelectPayment: (method: string) => void;
+  onSelectPayment: () => void;
   children: ReactNode;
   uri: string;
 };
 
 const PaymentButton = ({ onSelectPayment, children, uri }: Props) => {
   return (
-    <Pressable style={({ pressed }) => [styles.option, pressed && styles.pressed]} onPress={() => onSelectPayment("card")}>
+    <Pressable style={({ pressed }) => [styles.option, pressed && styles.pressed]} onPress={onSelectPayment}>
       <Image source={{ uri: uri }} style={styles.icon} />
       <Text style={styles.optionText}>{children}</Text>
     </Pressable>

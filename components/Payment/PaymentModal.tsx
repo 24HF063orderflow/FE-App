@@ -24,13 +24,13 @@ const PaymentModal = ({ visible, onClose, onOrder, onSelectPayment }: Props) => 
       <View>
         <Text style={styles.title}>Choose Payment Method</Text>
         <View style={styles.optionsContainer}>
-          <PaymentButton uri="https://via.placeholder.com/150" onSelectPayment={onSelectPayment}>
+          <PaymentButton uri="https://via.placeholder.com/150" onSelectPayment={() => onSelectPayment("CARD")}>
             PAY IN CARD
           </PaymentButton>
-          <PaymentButton uri="https://via.placeholder.com/150" onSelectPayment={onSelectPayment}>
+          <PaymentButton uri="https://via.placeholder.com/150" onSelectPayment={() => onSelectPayment("CASH")}>
             PAY IN CASH
           </PaymentButton>
-          <PaymentButton uri="https://via.placeholder.com/150" onSelectPayment={onSelectPayment}>
+          <PaymentButton uri="https://via.placeholder.com/150" onSelectPayment={() => onSelectPayment("KAKAOPAY ")}>
             PAY IN KAKAO
           </PaymentButton>
         </View>

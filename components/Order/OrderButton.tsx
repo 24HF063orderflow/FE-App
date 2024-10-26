@@ -4,13 +4,18 @@ import { scale } from "react-native-size-matters";
 
 type Props = {
   onPress: () => void;
+  disabled?: boolean;
   children: ReactNode;
 };
 
-const OrderButton = ({ onPress, children }: Props) => {
+const OrderButton = ({ onPress, disabled = false, children }: Props) => {
   return (
-    <Pressable style={({ pressed }) => (pressed ? [styles.button, styles.pressed] : styles.button)} onPress={onPress}>
-      <Text style={styles.buttonText}>{children}</Text>
+    <Pressable
+      style={({ pressed }) => (disabled ? [styles.button, styles.disabled] : pressed ? [styles.button, styles.pressed] : styles.button)}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Text style={disabled ? [styles.buttonText, styles.disabledColor] : styles.buttonText}>{children}</Text>
     </Pressable>
   );
 };
@@ -25,10 +30,16 @@ const styles = StyleSheet.create({
     borderRadius: scale(5),
     marginHorizontal: scale(5)
   },
+  disabled: {
+    backgroundColor: "gray"
+  },
   buttonText: {
     fontSize: scale(12),
     fontWeight: "bold",
     color: "#000"
+  },
+  disabledColor: {
+    color: "white"
   },
   pressed: {
     opacity: 0.75

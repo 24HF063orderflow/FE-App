@@ -9,7 +9,7 @@ type Props = {
 const OrderCard = ({ item }: Props) => {
   return (
     <Pressable style={styles.orderItem}>
-      <Text style={styles.itemText}>{item.title}</Text>
+      <Text style={styles.itemText}>{item.name}</Text>
       <View style={{ flexDirection: "row", justifyContent: "space-between", width: scale(90) }}>
         <Text style={[styles.itemText]}>{item.count}개</Text>
         <Text style={styles.itemText}>{item.price * item.count}원</Text>

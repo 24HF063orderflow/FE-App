@@ -22,6 +22,8 @@ import CategoryFoodManagementScreen from "./screens/CategoryFoodManagementScreen
 import ProductManagementScreen from "./screens/ProductManagementScreen";
 import ManagerLogin from "./screens/ManagerLogin";
 import OptionManagementScreen from "./screens/OptionManagementScreen";
+import { deleteAllCart } from "./utils/cart";
+import { deleteAllStaffCart } from "./utils/staffCall";
 
 export default function App() {
   const [isIdle, setIsIdle] = useState(true); // 초기 화면을 StartScreen으로 설정
@@ -53,8 +55,7 @@ export default function App() {
     CategoryFoodManagementScreen: CategoryFoodManagementScreen,
     ProductManagementScreen: ProductManagementScreen,
     ManagerLogin: ManagerLogin,
-    OptionManagementScreen: OptionManagementScreen,
-
+    OptionManagementScreen: OptionManagementScreen
   };
 
   useEffect(() => {
@@ -74,8 +75,10 @@ export default function App() {
     }
     idleTimer.current = setTimeout(() => {
       setIsIdle(true);
-      handleScreen("Login" as screenType);
-    }, 1000000); // 10000ms = 10초
+      // handleScreen("Login" as screenType);
+      deleteAllCart();
+      deleteAllStaffCart();
+    }, 300000); // 10000ms = 10초
   };
 
   const handleTouch = () => {
